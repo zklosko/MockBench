@@ -5,6 +5,9 @@ using System.Windows.Input;
 
 namespace MockBench.ViewModels
 {
+    /// <summary>
+    /// Wrapper for passing commands from the view to the viewmodel
+    /// </summary>
     public class RelayCommand : ICommand
     {
         public readonly Action _execute;

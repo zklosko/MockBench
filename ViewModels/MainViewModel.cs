@@ -1,9 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
-using System.Text;
+using System.IO;
+using System.Text.Json;
 using System.Windows;
 using System.Windows.Input;
+using Microsoft.Win32;
 using MockBench.Models;
 using MockBench.Services;
 
@@ -21,6 +23,9 @@ namespace MockBench.ViewModels
         public string LabelInput { get; set; } = string.Empty;
 
         public ICommand SendCommand { get; }
+        public ICommand ClearLogCommand { get; }
+        public ICommand LoadSessionCommand { get; }
+        public ICommand SaveSessionCommand { get; }
 
         /// <summary>
         /// Main runtime loop for GUI view
@@ -32,6 +37,9 @@ namespace MockBench.ViewModels
             _transport.StartListening();
 
             SendCommand = new RelayCommand(async () => await SendAsync());
+            ClearLogCommand = new RelayCommand(() => Log.Clear());
+            LoadSessionCommand = new RelayCommand(LoadSession);
+            SaveSessionCommand = new RelayCommand(SaveSession);
         }
 
         private async Task SendAsync()
@@ -57,6 +65,41 @@ namespace MockBench.ViewModels
             for (int i = 0; i < parts.Length; i++)
                 bytes[i] = Convert.ToByte(parts[i], 16);
             return bytes;
+        }
+
+        private void LoadSession()
+        {
+            var dialog = new OpenFileDialog
+            {
+                Filter = "JSON files (*.json)|*.json"
+            };
+
+            if (dialog.ShowDialog() == true)
+            {
+                var json = File.ReadAllText(dialog.FileName);
+                var entries = JsonSerializer.Deserialize<List<PacketEntry>>(json);
+
+                if (entries != null)
+                {
+                    Log.Clear();
+                    foreach (var entry in entries)
+                        Log.Add(entry);
+                }
+            }
+        }
+
+        private void SaveSession()
+        {
+            var dialog = new SaveFileDialog
+            {
+                Filter = "JSON files (*.json)|*.json",
+                FileName = $"session_{DateTime.Now:yyyyMMdd_HHmmss}.json"
+            };
+            if (dialog.ShowDialog() == true)
+            {
+                var json = JsonSerializer.Serialize(Log, new JsonSerializerOptions { WriteIndented = true });
+                File.WriteAllText(dialog.FileName, json);
+            }
         }
     }
 }

@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
+using System.Text.Json.Serialization;
 
 namespace MockBench.Models
 {
@@ -16,12 +17,18 @@ namespace MockBench.Models
         public string MessageHex => BitConverter.ToString(Bytes).Replace("-", " ");
         public string MessageAscii => System.Text.Encoding.ASCII.GetString(Bytes);
 
-        public PacketEntry(Direction direction, byte[] bytes, string? label = null)
+        [JsonConstructor]
+        public PacketEntry(Direction dir, byte[] bytes, DateTime timestamp, string? label = null)
         {
-            Dir = direction;
+            Dir = dir;
             Bytes = bytes;
             Label = label;
-            Timestamp = DateTime.Now;
+            Timestamp = timestamp;
+        }
+
+        public PacketEntry(Direction dir, byte[] bytes, string? label = null)
+            : this(dir, bytes, DateTime.Now, label)
+        {
         }
     }
 }
